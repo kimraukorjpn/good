@@ -20,13 +20,19 @@ APIM_BASE_URL = os.getenv("APIM_BASE_URL", "").rstrip("/")
 APIM_KEY = os.getenv("APIM_KEY", "")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "")
 
+
+def get_allowed_origins() -> list[str]:
+    raw_origins = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,https://good.youthai.site",
+    )
+    return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+
 app = FastAPI(title="길잡이 API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type"],

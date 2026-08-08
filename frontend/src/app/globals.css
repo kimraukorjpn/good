@@ -3,7 +3,7 @@
 :root { --ink:#18251f; --muted:#66716c; --paper:#f6f7f2; --surface:#fff; --line:#dfe4dd; --green:#176b52; --green-dark:#0f4d3b; --green-soft:#e7f2ec; --coral:#e36c4f; --gold:#b98322; --navy:#203b4a; }
 * { box-sizing:border-box; }
 html { background:var(--paper); }
-body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-noto),sans-serif; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
 button { color:inherit; font:inherit; }
 button:focus-visible { outline:3px solid rgba(23,107,82,.25); outline-offset:2px; }
 .app-shell { min-height:100vh; background-color:var(--paper); background-image:linear-gradient(rgba(24,37,31,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(24,37,31,.025) 1px,transparent 1px); background-size:28px 28px; }
@@ -78,7 +78,7 @@ button:focus-visible { outline:3px solid rgba(23,107,82,.25); outline-offset:2px
 .survey-question { margin:0; border:0; border-top:1px solid var(--line); padding:24px 0 27px; }
 .survey-question:first-child { border-top:0; }
 .survey-question legend { display:flex; width:100%; align-items:flex-start; gap:11px; padding:0; }
-.survey-question legend>span { display:grid; width:29px; height:29px; flex:0 0 auto; place-items:center; border-radius:5px; background:var(--navy); color:white; font-family:var(--font-mono); font-size:9px; }
+.survey-question legend>span { display:grid; width:29px; height:29px; flex:0 0 auto; place-items:center; border-radius:5px; background:var(--navy); color:white; font-family:"SFMono-Regular","Roboto Mono","Menlo",monospace; font-size:9px; }
 .survey-question legend>div { flex:1; }
 .survey-question legend strong,.survey-question legend small { display:block; }
 .survey-question legend strong { font-size:13px; }
@@ -175,14 +175,14 @@ button:focus-visible { outline:3px solid rgba(23,107,82,.25); outline-offset:2px
 .report-cover p { max-width:660px; margin:12px 0 0; color:#53635b; font-size:11px; line-height:1.7; }
 .report-cover small { flex:0 0 auto; color:var(--muted); font-size:9px; }
 .consulting-report>section { border-bottom:1px solid var(--line); padding:28px 4px; }
-.report-label { margin:0 0 4px; color:var(--green); font-family:var(--font-mono); font-size:9px; font-weight:800; }
+.report-label { margin:0 0 4px; color:var(--green); font-family:"SFMono-Regular","Roboto Mono","Menlo",monospace; font-size:9px; font-weight:800; }
 .consulting-report h3 { margin:0; font-size:19px; }
 .report-overview>p:not(.report-label),.report-story>p:not(.report-label) { margin:14px 0 0; color:#46554e; font-size:12px; line-height:1.9; white-space:pre-wrap; }
 .report-section-title { margin-bottom:17px; }
 .report-recommendation-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; }
 .report-recommendation-grid article { border:1px solid var(--line); background:#fbfcfa; padding:17px; }
 .report-recommendation-grid article>div:first-child { display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--green); }
-.report-recommendation-grid article>div:first-child span { font-family:var(--font-mono); font-size:10px; font-weight:800; }
+.report-recommendation-grid article>div:first-child span { font-family:"SFMono-Regular","Roboto Mono","Menlo",monospace; font-size:10px; font-weight:800; }
 .report-recommendation-grid article>div:first-child small { color:var(--muted); font-size:8px; }
 .report-recommendation-grid h4,.report-action-list h4 { margin:10px 0 0; font-size:14px; }
 .report-recommendation-grid article>p,.report-action-list article>p { margin:7px 0 0; color:var(--muted); font-size:10px; line-height:1.7; }
@@ -204,7 +204,7 @@ button:focus-visible { outline:3px solid rgba(23,107,82,.25); outline-offset:2px
 .recommendation-card { border:1px solid var(--line); border-radius:7px; padding:18px; transition:transform .18s,box-shadow .18s; }
 .recommendation-card:hover { transform:translateY(-3px); box-shadow:0 12px 26px rgba(30,52,41,.09); }
 .card-topline { display:flex; align-items:center; justify-content:space-between; }
-.rank { color:#a8b0ac; font-family:var(--font-mono); font-size:11px; }
+.rank { color:#a8b0ac; font-family:"SFMono-Regular","Roboto Mono","Menlo",monospace; font-size:11px; }
 .support-badge { border-radius:4px; padding:4px 7px; font-size:9px; font-weight:800; }
 .support-badge.strong { background:#dff1e7; color:#176b52; }
 .support-badge.caution { background:#fff0d7; color:#916315; }

@@ -1,16 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-
-const notoSans = Noto_Sans_KR({
-  variable: "--font-noto",
-  subsets: ["latin"],
-});
-
-const robotoMono = Roboto_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "길잡이 | AI 진로·대입 동반자",
@@ -19,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${notoSans.variable} ${robotoMono.variable}`}>
+    <html lang="ko">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

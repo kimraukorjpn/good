@@ -13,8 +13,11 @@ from backend.models import AuthSession, User
 
 SESSION_COOKIE = "giljabi_session"
 SESSION_DAYS = 7
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 password_hash = PasswordHash.recommended()
+
+
+def cookie_secure_enabled() -> bool:
+    return os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
 
 def hash_password(password: str) -> str:
@@ -39,7 +42,7 @@ def create_session(response: Response, user: User, db: Session) -> None:
         token,
         max_age=SESSION_DAYS * 24 * 60 * 60,
         httponly=True,
-        secure=COOKIE_SECURE,
+        secure=cookie_secure_enabled(),
         samesite="lax",
         path="/",
     )

@@ -65,3 +65,9 @@ npm run dev
 ```
 
 환경변수는 [API 키 관리 가이드](docs/API_KEY_MANAGEMENT.md), 회원과 학생 프로필 구조는 [인증 및 프로필 문서](docs/AUTH_AND_PROFILE.md)를 참고하세요.
+
+## 운영 배포
+
+공개 배포 주소는 `https://good.youthai.site` 입니다.
+
+홈서버 배포 절차와 GitHub 변경 반영 방법은 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)를 참고하세요.
