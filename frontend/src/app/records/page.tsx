@@ -113,7 +113,7 @@ export default function RecordsPage() {
   return (
     <main className="records-page">
       <header className="profile-header">
-        <button className="survey-back" onClick={() => router.push("/profile")}><ArrowLeft size={17} /> 내 정보</button>
+        <button className="survey-back" onClick={() => router.push("/")}><ArrowLeft size={17} /> 홈</button>
         <div className="auth-brand"><span><GraduationCap size={23} /></span><strong>길잡이</strong></div>
         <div><span>{user.full_name} 학생</span><button onClick={logout}><LogOut size={16} /> 로그아웃</button></div>
       </header>

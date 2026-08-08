@@ -59,6 +59,60 @@ GRADE_STRATEGIES = {
     3: "지원전략형: 기존 기록의 근거를 지원 학과와 연결하고 남은 성적 관리와 지원 서사를 정리합니다.",
 }
 
+INTEREST_PATHS = {
+    "인공지능·데이터": ("인공지능학과", "데이터 분석가"),
+    "컴퓨터·소프트웨어": ("컴퓨터공학과", "소프트웨어 개발자"),
+    "수학·통계": ("통계학과", "통계 전문가"),
+    "물리·공학": ("기계공학과", "기계공학 엔지니어"),
+    "화학·신소재": ("신소재공학과", "신소재 연구원"),
+    "생명·의학": ("생명과학과", "생명과학 연구원"),
+    "환경·에너지": ("환경공학과", "환경·에너지 전문가"),
+    "심리·상담": ("심리학과", "상담·심리 전문가"),
+    "교육": ("교육학과", "교육 전문가"),
+    "경제·경영": ("경영학과", "경영·기획자"),
+    "법·정책": ("행정학과", "공공정책 전문가"),
+    "사회·문화": ("사회학과", "사회조사 분석가"),
+    "언어·문학": ("국어국문학과", "작가·콘텐츠 기획자"),
+    "역사·철학": ("사학과", "문화유산 연구원"),
+    "미디어·콘텐츠": ("미디어커뮤니케이션학과", "미디어 콘텐츠 기획자"),
+    "디자인·예술": ("시각디자인학과", "시각 디자이너"),
+    "건축·도시": ("건축학과", "건축·도시 전문가"),
+    "스포츠·건강": ("스포츠과학과", "스포츠 전문가"),
+}
+
+
+def unique_strings(values: list[str]) -> list[str]:
+    return list(dict.fromkeys(value.strip() for value in values if isinstance(value, str) and value.strip()))
+
+
+def compact_record(record: dict) -> dict:
+    fields_with_items = ("awards", "creative_activities", "behavior_opinions", "semester_grades")
+    return {
+        "summary": str(record.get("summary", ""))[:2000],
+        "subjects": record.get("subjects", [])[:20],
+        "activities": record.get("activities", [])[:15],
+        "competencies": record.get("competencies", [])[:10],
+        **{field: record.get(field, [])[:15] for field in fields_with_items},
+    }
+
+
+def has_duplicated_recommendation_basis(report: dict) -> bool:
+    careers = report.get("careers", [])
+    majors = report.get("majors", [])
+    career_rationales = {str(item.get("rationale", "")).strip() for item in careers if isinstance(item, dict)} - {""}
+    major_rationales = {str(item.get("rationale", "")).strip() for item in majors if isinstance(item, dict)} - {""}
+    career_evidence = {
+        tuple(unique_strings(item.get("evidence", [])))
+        for item in careers
+        if isinstance(item, dict) and item.get("evidence")
+    }
+    major_evidence = {
+        tuple(unique_strings(item.get("evidence", [])))
+        for item in majors
+        if isinstance(item, dict) and item.get("evidence")
+    }
+    return bool(career_rationales & major_rationales or career_evidence & major_evidence)
+
 
 def build_context(user: User) -> dict:
     profile = user.profile
@@ -71,7 +125,7 @@ def build_context(user: User) -> dict:
         "희망 지역": profile.preferred_regions,
         "관심 전형": profile.admission_types,
         "진로 설문": profile.survey_answers,
-        "생기부 분석": profile.academic_record,
+        "생기부 분석": compact_record(profile.academic_record or {}),
     }
 
 
@@ -81,26 +135,63 @@ def local_report(user: User) -> dict:
     strengths = list(dict.fromkeys(record.get("competencies", [])))[:6]
     interests = profile.interests or profile.career_goals or ["관심 분야 탐색"]
     subjects = record.get("subjects", [])
-    evidence = [item.get("details", "") for item in subjects if item.get("details")][:3]
+    survey = profile.survey_answers or {}
+    survey_work_signals = unique_strings(
+        survey.get("problem_approach", [])
+        + survey.get("team_role", [])
+        + survey.get("preferred_output", [])
+        + survey.get("activity_environment", [])
+    )
+    survey_value_signals = unique_strings(survey.get("values", []) + survey.get("learning_style", []))
+    subject_evidence = [
+        f"[생기부-교과] {item.get('subject', '교과')}: {item.get('details', '')}"
+        for item in subjects
+        if isinstance(item, dict) and item.get("details")
+    ]
+    activity_evidence = [f"[생기부-활동] {activity}" for activity in record.get("activities", []) if isinstance(activity, str) and activity.strip()]
+    for item in record.get("creative_activities", []):
+        if isinstance(item, dict) and item.get("details"):
+            activity_evidence.append(f"[생기부-활동] {item.get('title') or '창의적 체험활동'}: {item['details']}")
+    career_titles = unique_strings(profile.career_goals or [INTEREST_PATHS.get(interest, ("", interest))[1] for interest in interests])[:3]
+    major_titles = unique_strings([INTEREST_PATHS[interest][0] for interest in interests if interest in INTEREST_PATHS])[:3]
+    if not major_titles:
+        major_titles = [f"{interest} 관련 학과" for interest in interests[:3]]
     careers = [
         {
             "title": goal,
-            "category": "희망 진로 기반",
-            "rationale": f"입력한 관심 분야와 희망 진로에서 확인된 {goal} 방향을 우선 탐색할 수 있습니다.",
-            "evidence": evidence or [f"프로필 관심 분야: {', '.join(interests[:3])}"],
+            "category": "직무 적합성 탐색",
+            "rationale": (
+                f"{goal}의 실제 업무 방식이 설문에서 선택한 "
+                f"{', '.join(survey_work_signals[:2]) or '문제 해결 방식'}과 맞는지 우선 확인할 직업 후보입니다. "
+                + ("생기부 활동에서도 관련 탐구 경험이 확인됩니다." if activity_evidence else "현재 생기부 활동 근거는 부족하므로 직무 체험으로 적합성을 추가 확인해야 합니다.")
+            ),
+            "evidence": unique_strings(
+                [f"[설문] 관심 직업 역할: {goal}"]
+                + ([f"[설문] 선호하는 업무·결과물: {', '.join(survey_work_signals[:3])}"] if survey_work_signals else [])
+                + activity_evidence[:1]
+            ),
             "next_steps": ["직무 인터뷰와 전공 교육과정을 조사하세요.", "관련 교과에서 작은 탐구 결과물을 만드세요."],
         }
-        for goal in (profile.career_goals or interests)[:3]
+        for goal in career_titles
     ]
     majors = [
         {
-            "title": f"{interest} 관련 학과",
-            "category": "전공 탐색 후보",
-            "rationale": "현재 관심과 생기부 기록을 연결해 우선 탐색할 전공 후보입니다.",
-            "evidence": evidence or [f"관심 분야: {interest}"],
+            "title": major,
+            "category": "교과·학업 적합성 탐색",
+            "rationale": (
+                f"{major}는 관심 분야를 학문적으로 탐색하면서 "
+                f"{', '.join(profile.preferred_subjects[:2]) or '관련 기초 교과'}의 학업 기록을 심화할 전공 후보입니다. "
+                + ("생기부 교과 기록을 바탕으로 교육과정 적합성을 비교할 수 있습니다." if subject_evidence else "현재 교과 세부 근거가 부족하므로 대학별 핵심 교과와 교육과정을 먼저 비교해야 합니다.")
+            ),
+            "evidence": unique_strings(
+                [f"[설문] 관심 분야: {', '.join(interests[:3])}"]
+                + ([f"[설문] 선호 교과: {', '.join(profile.preferred_subjects[:3])}"] if profile.preferred_subjects else [])
+                + subject_evidence[:1]
+                + ([f"[설문] 학습 방식·가치: {', '.join(survey_value_signals[:2])}"] if survey_value_signals else [])
+            ),
             "next_steps": ["대학별 실제 개설 학과와 교육과정을 공식 입학처에서 확인하세요."],
         }
-        for interest in interests[:3]
+        for major in major_titles
     ]
     subject_strategies = [
         {
@@ -132,11 +223,41 @@ async def generate_report(user: User) -> dict:
     fallback = local_report(user)
     if not APIM_BASE_URL or not APIM_KEY or not CHAT_MODEL:
         return fallback
-    schema = AdmissionReportResponse(**fallback).model_dump(exclude={"generated_at"})
+    output_shape = {
+        "overview": "학생 데이터에 근거한 전체 요약",
+        "strengths": ["근거가 확인된 강점"],
+        "careers": [{"title": "구체적인 직업명", "category": "직업 분야", "rationale": "직무 적합성 판단", "evidence": ["[설문] 또는 [생기부] 출처가 표시된 근거"], "next_steps": ["직업 탐색 행동"]}],
+        "majors": [{"title": "실제 대학 전공·학과명", "category": "전공 계열", "rationale": "교과 및 학업 적합성 판단", "evidence": ["[설문] 또는 [생기부] 출처가 표시된 근거"], "next_steps": ["전공 탐색 행동"]}],
+        "record_directions": [{"title": "생기부 보완 방향", "priority": "높음|보통|낮음", "rationale": "판단 근거", "actions": ["실행 방법"]}],
+        "subject_strategies": [{"title": "교과명", "priority": "높음|보통|낮음", "rationale": "판단 근거", "actions": ["실행 방법"]}],
+        "application_story": "학생 기록으로 구성한 지원 서사",
+        "cautions": ["해석 시 주의점"],
+    }
+    student_context = json.dumps(build_context(user), ensure_ascii=False)
     payload = {
         "messages": [
-            {"role": "system", "content": "당신은 대한민국 고등학생 입시 컨설턴트입니다. 제공된 사실만 사용하고 합격을 단정하지 마세요. 학년에 맞는 실행 가능한 한국어 컨설팅 레포트를 JSON으로 작성하세요."},
-            {"role": "user", "content": f"학년 전략: {GRADE_STRATEGIES[user.profile.grade]}\nJSON 구조 예시: {json.dumps(schema, ensure_ascii=False)}\n학생 입력 데이터: {json.dumps(build_context(user), ensure_ascii=False)[:50000]}"},
+            {
+                "role": "system",
+                "content": (
+                    "당신은 대한민국 고등학생의 설문과 학교생활기록부를 교차 분석하는 입시 컨설턴트입니다. "
+                    "입력에 없는 활동·성취·적성을 만들지 말고, 근거가 부족하면 부족하다고 명시하세요. "
+                    "추천 직업은 실제 업무·역할·업무 환경 적합성을, 추천 전공은 교육과정·핵심 교과·학업 준비도를 판단하세요. "
+                    "직업과 전공의 rationale을 재사용하거나 evidence 목록을 동일하게 작성하지 마세요. "
+                    "각 추천의 evidence에는 [설문], [생기부-교과], [생기부-활동] 중 실제 출처를 붙이고 입력의 구체 내용을 인용·요약하세요. "
+                    "설문 선호만으로 생기부 역량이 확인됐다고 표현하지 마세요. 합격 가능성도 단정하지 마세요. "
+                    "설명 문장 없이 지정된 JSON 객체만 한국어로 출력하세요."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"학년 전략: {GRADE_STRATEGIES[user.profile.grade]}\n"
+                    "careers와 majors는 각각 최대 3개만 제안하세요. 각 항목은 서로 다른 학생 근거로 설명하고, "
+                    "생기부가 있으면 최소 1개의 생기부 근거를 포함하세요. 관련 근거가 없는 추천은 만들지 마세요.\n"
+                    f"출력 JSON 구조: {json.dumps(output_shape, ensure_ascii=False)}\n"
+                    f"학생 입력 데이터: {student_context}"
+                ),
+            },
         ],
         "response_format": {"type": "json_object"},
         "max_completion_tokens": 6000,
@@ -148,6 +269,12 @@ async def generate_report(user: User) -> dict:
             response.raise_for_status()
             result = json.loads(response.json()["choices"][0]["message"]["content"])
             result.update({"grade": user.profile.grade, "grade_strategy": GRADE_STRATEGIES[user.profile.grade], "generation_mode": "ai"})
+            AdmissionReportResponse(**result)
+            if has_duplicated_recommendation_basis(result):
+                result["careers"] = fallback["careers"]
+                result["majors"] = fallback["majors"]
+                result["generation_mode"] = "ai_with_grounded_recommendations"
+                result.setdefault("cautions", []).append("중복된 AI 추천 근거를 제외하고 설문·생기부 기반 추천으로 교체했습니다.")
             return result
     except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError, TypeError, ValueError):
         fallback["cautions"].append("AI 서비스 연결에 실패해 입력 정보 기반 기본 레포트를 생성했습니다.")
