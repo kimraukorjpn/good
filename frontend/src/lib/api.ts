@@ -1,3 +1,5 @@
+import type { KidsExperienceResult } from "@/components/kids/types";
+
 export type CurrentUser = {
   id: string;
   email: string;
@@ -5,6 +7,18 @@ export type CurrentUser = {
   created_at: string;
   profile_completed: boolean;
   grade: 1 | 2 | 3 | null;
+};
+
+export type KidsDraftPayload = {
+  participantName: string;
+  favoriteTopics: string[];
+  favoriteActivities: string[];
+  frequentActivities: string[];
+  comfortStyle: string;
+  preferredOutcomeTypes: string[];
+  proudMomentType: string;
+  freeTextNote: string;
+  personalityAnswers: Record<string, string>;
 };
 
 export class ApiError extends Error {
@@ -34,4 +48,55 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     throw new ApiError(data.detail ?? fallbackMessage, response.status);
   }
   return data as T;
+}
+
+export async function analyzeKidsExperience(
+  draft: KidsDraftPayload,
+): Promise<KidsExperienceResult> {
+  return apiRequest<KidsExperienceResult>("/kids-experience/analyze", {
+    method: "POST",
+    body: JSON.stringify({
+      participant_name: draft.participantName,
+      favorite_topics: draft.favoriteTopics,
+      favorite_activities: draft.favoriteActivities,
+      frequent_activities: draft.frequentActivities,
+      comfort_style: draft.comfortStyle,
+      preferred_outcome_types: draft.preferredOutcomeTypes,
+      proud_moment_type: draft.proudMomentType,
+      free_text_note: draft.freeTextNote,
+      personality_answers: draft.personalityAnswers,
+    }),
+  });
+}
+
+export async function downloadKidsReport(payload: {
+  draft: KidsDraftPayload;
+  result: KidsExperienceResult;
+}): Promise<Blob> {
+  const response = await fetch("/backend-api/kids-experience/report", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      draft: {
+        participant_name: payload.draft.participantName,
+        favorite_topics: payload.draft.favoriteTopics,
+        favorite_activities: payload.draft.favoriteActivities,
+        frequent_activities: payload.draft.frequentActivities,
+        comfort_style: payload.draft.comfortStyle,
+        preferred_outcome_types: payload.draft.preferredOutcomeTypes,
+        proud_moment_type: payload.draft.proudMomentType,
+        free_text_note: payload.draft.freeTextNote,
+        personality_answers: payload.draft.personalityAnswers,
+      },
+      result: payload.result,
+    }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new ApiError(data.detail ?? "리포트를 만들지 못했습니다.", response.status);
+  }
+
+  return response.blob();
 }

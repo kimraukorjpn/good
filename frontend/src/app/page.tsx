@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { apiRequest, ApiError, CurrentUser } from "@/lib/api";
+import { PublicHome } from "@/components/public-home";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/backend-api";
 
@@ -92,8 +93,11 @@ export default function Home() {
         const savedReport = await apiRequest<AdmissionReport>("/reports");
         if (savedReport.generated_at) setReport(savedReport);
       } catch (error) {
-        if (error instanceof ApiError && error.status === 401) router.replace("/login");
-        else setAnalysisError(error instanceof Error ? error.message : "저장된 레포트를 불러오지 못했습니다.");
+        if (error instanceof ApiError && error.status === 401) {
+          setCurrentUser(null);
+        } else {
+          setAnalysisError(error instanceof Error ? error.message : "저장된 레포트를 불러오지 못했습니다.");
+        }
       } finally {
         setAuthChecking(false);
       }
@@ -133,7 +137,7 @@ export default function Home() {
   }
 
   if (authChecking) return <main className="auth-loading"><LoaderCircle className="loading-icon" /><span>내 진로 여정을 불러오는 중</span></main>;
-  if (!currentUser) return null;
+  if (!currentUser) return <PublicHome />;
 
   return (
     <div className="app-shell">

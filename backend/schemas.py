@@ -79,3 +79,79 @@ class StudentProfileResponse(BaseModel):
     academic_record: dict
     record_processed_at: datetime | None
     updated_at: datetime
+
+
+class KidsExperienceAnalyzeRequest(BaseModel):
+    participant_name: str = Field(min_length=1, max_length=40)
+    favorite_topics: list[str] = Field(min_length=3, max_length=5)
+    favorite_activities: list[str] = Field(min_length=2, max_length=4)
+    frequent_activities: list[str] = Field(min_length=1, max_length=3)
+    comfort_style: str = Field(min_length=1, max_length=40)
+    preferred_outcome_types: list[str] = Field(min_length=1, max_length=2)
+    proud_moment_type: str = Field(min_length=1, max_length=80)
+    free_text_note: str = Field(default="", max_length=120)
+    personality_answers: dict[str, str] = Field(min_length=8, max_length=8)
+
+    @field_validator("favorite_topics", "favorite_activities", "frequent_activities", "preferred_outcome_types")
+    @classmethod
+    def clean_string_list(cls, values: list[str]) -> list[str]:
+        return list(dict.fromkeys(value.strip() for value in values if value.strip()))
+
+    @field_validator("comfort_style", "proud_moment_type")
+    @classmethod
+    def clean_string_value(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("personality_answers")
+    @classmethod
+    def clean_personality_answers(cls, answers: dict[str, str]) -> dict[str, str]:
+        return {
+            key.strip(): value.strip()
+            for key, value in answers.items()
+            if key.strip() and value.strip()
+        }
+
+
+class KidsRecommendedJob(BaseModel):
+    title: str = Field(min_length=1, max_length=80)
+    reason: str = Field(min_length=1, max_length=300)
+    fit_comment: str = Field(min_length=1, max_length=220)
+    tags: list[str] = Field(default_factory=list, max_length=5)
+    school_hint: str = Field(min_length=1, max_length=200)
+    home_mission: str = Field(min_length=1, max_length=200)
+    friend_fit: str = Field(min_length=1, max_length=200)
+
+
+class KidsQuickCounsel(BaseModel):
+    why_this_fits: str = Field(min_length=1, max_length=400)
+    strengths: str = Field(min_length=1, max_length=400)
+    alternative_jobs: str = Field(min_length=1, max_length=400)
+
+
+class KidsReportSections(BaseModel):
+    one_line_summary: str = Field(min_length=1, max_length=400)
+    profile_overview: str = Field(min_length=1, max_length=500)
+    strengths_summary: str = Field(min_length=1, max_length=400)
+    home_observation_points: list[str] = Field(default_factory=list, min_length=2, max_length=4)
+    school_support_points: list[str] = Field(default_factory=list, min_length=2, max_length=4)
+    parent_message: str = Field(min_length=1, max_length=400)
+    next_talk_question: str = Field(min_length=1, max_length=400)
+    hidden_potential_fields: list[str] = Field(default_factory=list, min_length=2, max_length=4)
+    closing_message: str = Field(min_length=1, max_length=400)
+
+
+class KidsExperienceAnalyzeResponse(BaseModel):
+    participant_name: str
+    personality_type: str
+    personality_summary: str
+    strength_keywords: list[str] = Field(default_factory=list, max_length=6)
+    recommended_jobs: list[KidsRecommendedJob] = Field(default_factory=list, min_length=3, max_length=3)
+    suggested_activities: list[str] = Field(default_factory=list, min_length=1, max_length=4)
+    quick_counsel: KidsQuickCounsel
+    report_sections: KidsReportSections
+    fallback_used: bool = True
+
+
+class KidsExperienceReportRequest(BaseModel):
+    draft: KidsExperienceAnalyzeRequest
+    result: KidsExperienceAnalyzeResponse

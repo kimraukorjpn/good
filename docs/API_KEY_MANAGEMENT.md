@@ -72,6 +72,58 @@ cd frontend
 npm run dev
 ```
 
+## 초등 체험 AI 응답 바로 확인하기
+
+초등 체험 기능은 루트 `.env`의 APIM 설정을 그대로 사용합니다.
+
+```dotenv
+APIM_BASE_URL=https://your-apim.azure-api.net/foundry
+APIM_KEY=실제_APIM_키
+CHAT_MODEL=사용할_채팅_모델
+```
+
+설정을 넣은 뒤 백엔드를 다시 시작하면 `/api/kids-experience/analyze`가 fallback 예시 대신 실제 AI 응답을 시도합니다.
+
+확인 순서는 다음이 가장 쉽습니다.
+
+1. 루트 `.env`에 APIM 값을 입력합니다.
+2. FastAPI 백엔드를 다시 실행합니다.
+3. 프론트에서 `/kids` 체험을 열고 질문을 완료합니다.
+4. 결과 화면에서 문구가 이전과 달라졌는지 확인합니다.
+
+로컬에서 API만 빠르게 확인하고 싶다면 아래처럼 호출해도 됩니다.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/kids-experience/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "participant_name": "민지",
+    "favorite_topics": ["동물", "우주", "로봇"],
+    "favorite_activities": ["만들기", "관찰하기"],
+    "free_text_note": "강아지 돌보기",
+    "personality_answers": {
+      "social_style": "친구와 함께 이야기하기",
+      "start_style": "바로 해보는 편",
+      "expression_style": "직접 만들어 보여주기",
+      "idea_style": "상상하고 새로 떠올리기",
+      "plan_style": "생각나는 대로 해보기",
+      "care_style": "사람 도와주기",
+      "challenge_style": "새로운 것 도전하기",
+      "speed_style": "신나게 빠르게"
+    }
+  }'
+```
+
+응답에서 아래 값들이 실제로 채워졌는지 보면 됩니다.
+
+- `recommended_jobs[].fit_comment`
+- `report_sections.one_line_summary`
+- `report_sections.strengths_summary`
+- `report_sections.parent_message`
+- `report_sections.next_talk_question`
+
+만약 APIM 연결이 실패하면 현재 코드는 자동으로 fallback 예시 결과를 반환합니다. 이때는 `fallback_used` 값이 `true`로 남습니다.
+
 ## 배포 환경
 
 - Vercel에는 `NEXT_PUBLIC_API_BASE_URL`만 등록합니다.

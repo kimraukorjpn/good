@@ -10,6 +10,7 @@ from backend.routers.auth import router as auth_router
 from backend.routers.profiles import router as profiles_router
 from backend.routers.records import router as records_router
 from backend.routers.reports import router as reports_router
+from backend.routers.kids_experience import router as kids_experience_router
 from backend.models import User
 from backend.security import get_current_user
 
@@ -41,6 +42,7 @@ app.include_router(auth_router)
 app.include_router(profiles_router)
 app.include_router(records_router)
 app.include_router(reports_router)
+app.include_router(kids_experience_router)
 
 
 class AnalysisRequest(BaseModel):
