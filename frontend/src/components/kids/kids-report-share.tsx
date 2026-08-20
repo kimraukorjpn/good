@@ -16,6 +16,21 @@ function buildQrImageUrl(sharedUrl: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodedUrl}`;
 }
 
+function buildShareSignature(draft: KidsDraft, result: KidsExperienceResult) {
+  return JSON.stringify({
+    participantName: draft.participantName,
+    favoriteTopics: draft.favoriteTopics,
+    favoriteActivities: draft.favoriteActivities,
+    frequentActivities: draft.frequentActivities,
+    comfortStyle: draft.comfortStyle,
+    preferredOutcomeTypes: draft.preferredOutcomeTypes,
+    proudMomentType: draft.proudMomentType,
+    freeTextNote: draft.freeTextNote,
+    personalityAnswers: draft.personalityAnswers,
+    result,
+  });
+}
+
 export function KidsReportShare({
   draft,
   result,
@@ -27,6 +42,7 @@ export function KidsReportShare({
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const shareSignature = useMemo(() => buildShareSignature(draft, result), [draft, result]);
   const sharedUrl = useMemo(() => (token ? buildSharedReportUrl(token) : ""), [token]);
   const qrImageUrl = useMemo(() => (sharedUrl ? buildQrImageUrl(sharedUrl) : ""), [sharedUrl]);
 
@@ -53,17 +69,20 @@ export function KidsReportShare({
   }, [open]);
 
   async function ensureShareToken() {
-    const savedToken = readKidsShareToken();
-    if (savedToken) {
-      setToken(savedToken);
-      return savedToken;
+    const savedShare = readKidsShareToken();
+    if (savedShare && savedShare.signature === shareSignature) {
+      setToken(savedShare.token);
+      return savedShare.token;
     }
 
     setLoading(true);
     setError("");
     try {
       const response = await createKidsShare({ draft, result });
-      writeKidsShareToken(response.token);
+      writeKidsShareToken({
+        token: response.token,
+        signature: shareSignature,
+      });
       setToken(response.token);
       return response.token;
     } catch {

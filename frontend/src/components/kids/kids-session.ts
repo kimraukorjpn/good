@@ -7,6 +7,11 @@ const RESULT_KEY = "kids-experience-result";
 const PRINT_SNAPSHOT_KEY = "kids-experience-print-snapshot";
 const SHARE_TOKEN_KEY = "kids-experience-share-token";
 
+type KidsShareTokenSnapshot = {
+  token: string;
+  signature: string;
+};
+
 export const EMPTY_KIDS_DRAFT: KidsDraft = {
   participantName: "",
   favoriteTopics: [],
@@ -182,14 +187,34 @@ export function readKidsPrintSnapshot(): {
   }
 }
 
-export function readKidsShareToken(): string {
-  if (typeof window === "undefined") return "";
-  return window.sessionStorage.getItem(SHARE_TOKEN_KEY) ?? "";
+export function readKidsShareToken(): KidsShareTokenSnapshot | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.sessionStorage.getItem(SHARE_TOKEN_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<KidsShareTokenSnapshot>;
+    if (parsed && typeof parsed.token === "string" && typeof parsed.signature === "string") {
+      return {
+        token: parsed.token,
+        signature: parsed.signature,
+      };
+    }
+  } catch {
+    if (typeof raw === "string" && raw.trim()) {
+      return {
+        token: raw,
+        signature: "",
+      };
+    }
+  }
+
+  return null;
 }
 
-export function writeKidsShareToken(token: string) {
+export function writeKidsShareToken(snapshot: KidsShareTokenSnapshot) {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(SHARE_TOKEN_KEY, token);
+  window.sessionStorage.setItem(SHARE_TOKEN_KEY, JSON.stringify(snapshot));
 }
 
 export function clearKidsShareToken() {

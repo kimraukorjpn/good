@@ -2,10 +2,17 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { KidsReportShare } from "@/components/kids/kids-report-share";
+import { createKidsShare } from "@/lib/api";
 
 vi.mock("@/lib/api", () => ({
   createKidsShare: vi.fn(async () => ({ token: "share-token-123" })),
 }));
+
+beforeEach(() => {
+  window.sessionStorage.clear();
+  vi.clearAllMocks();
+  vi.mocked(createKidsShare).mockResolvedValue({ token: "share-token-123" });
+});
 
 const draft = {
   participantName: "민지",
@@ -69,3 +76,40 @@ test("opens QR share modal and shows reusable shared link", async () => {
   );
 });
 
+test("creates a new share token when the report content changes", async () => {
+  const user = userEvent.setup();
+  const createKidsShareMock = vi.mocked(createKidsShare);
+  createKidsShareMock
+    .mockResolvedValueOnce({ token: "share-token-aaa" })
+    .mockResolvedValueOnce({ token: "share-token-bbb" });
+
+  const firstResult = {
+    ...result,
+    participant_name: "민지",
+  };
+
+  const secondResult = {
+    ...result,
+    participant_name: "준호",
+  };
+
+  const { rerender } = render(<KidsReportShare draft={draft} result={firstResult} />);
+
+  await user.click(screen.getByRole("button", { name: "QR로 휴대폰에 가져가기" }));
+
+  await waitFor(() => {
+    expect(screen.getByDisplayValue("http://localhost:3000/kids/shared/share-token-aaa")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByRole("button", { name: "닫기" }));
+
+  rerender(<KidsReportShare draft={{ ...draft, participantName: "준호" }} result={secondResult} />);
+
+  await user.click(screen.getByRole("button", { name: "QR로 휴대폰에 가져가기" }));
+
+  await waitFor(() => {
+    expect(screen.getByDisplayValue("http://localhost:3000/kids/shared/share-token-bbb")).toBeInTheDocument();
+  });
+
+  expect(createKidsShareMock).toHaveBeenCalledTimes(2);
+});
