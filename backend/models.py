@@ -61,3 +61,14 @@ class AuthSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     user: Mapped[User] = relationship(back_populates="sessions")
+
+
+class KidsExperienceShare(Base):
+    __tablename__ = "kids_experience_shares"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    share_token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    participant_name: Mapped[str] = mapped_column(String(40), index=True)
+    draft_payload: Mapped[dict] = mapped_column(JSONB)
+    result_payload: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)

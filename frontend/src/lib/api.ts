@@ -21,6 +21,22 @@ export type KidsDraftPayload = {
   personalityAnswers: Record<string, string>;
 };
 
+export type KidsSharePayload = {
+  token: string;
+  draft: {
+    participant_name: string;
+    favorite_topics: string[];
+    favorite_activities: string[];
+    frequent_activities: string[];
+    comfort_style: string;
+    preferred_outcome_types: string[];
+    proud_moment_type: string;
+    free_text_note: string;
+    personality_answers: Record<string, string>;
+  };
+  result: KidsExperienceResult;
+};
+
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
     super(message);
@@ -99,4 +115,31 @@ export async function downloadKidsReport(payload: {
   }
 
   return response.blob();
+}
+
+export async function createKidsShare(payload: {
+  draft: KidsDraftPayload;
+  result: KidsExperienceResult;
+}): Promise<{ token: string }> {
+  return apiRequest<{ token: string }>("/kids-experience/share", {
+    method: "POST",
+    body: JSON.stringify({
+      draft: {
+        participant_name: payload.draft.participantName,
+        favorite_topics: payload.draft.favoriteTopics,
+        favorite_activities: payload.draft.favoriteActivities,
+        frequent_activities: payload.draft.frequentActivities,
+        comfort_style: payload.draft.comfortStyle,
+        preferred_outcome_types: payload.draft.preferredOutcomeTypes,
+        proud_moment_type: payload.draft.proudMomentType,
+        free_text_note: payload.draft.freeTextNote,
+        personality_answers: payload.draft.personalityAnswers,
+      },
+      result: payload.result,
+    }),
+  });
+}
+
+export async function fetchKidsShare(token: string): Promise<KidsSharePayload> {
+  return apiRequest<KidsSharePayload>(`/kids-experience/share/${token}`);
 }

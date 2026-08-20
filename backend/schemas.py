@@ -155,3 +155,18 @@ class KidsExperienceAnalyzeResponse(BaseModel):
 class KidsExperienceReportRequest(BaseModel):
     draft: KidsExperienceAnalyzeRequest
     result: KidsExperienceAnalyzeResponse
+
+
+class KidsExperienceShareCreateRequest(BaseModel):
+    draft: KidsExperienceAnalyzeRequest
+    result: KidsExperienceAnalyzeResponse
+
+
+class KidsExperienceShareCreateResponse(BaseModel):
+    token: str
+
+
+class KidsExperienceShareReadResponse(BaseModel):
+    token: str
+    draft: KidsExperienceAnalyzeRequest
+    result: KidsExperienceAnalyzeResponse

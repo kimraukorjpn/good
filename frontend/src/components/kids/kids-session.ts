@@ -5,6 +5,7 @@ import { KidsDraft, KidsExperienceResult } from "@/components/kids/types";
 const DRAFT_KEY = "kids-experience-draft";
 const RESULT_KEY = "kids-experience-result";
 const PRINT_SNAPSHOT_KEY = "kids-experience-print-snapshot";
+const SHARE_TOKEN_KEY = "kids-experience-share-token";
 
 export const EMPTY_KIDS_DRAFT: KidsDraft = {
   participantName: "",
@@ -179,4 +180,19 @@ export function readKidsPrintSnapshot(): {
   } catch {
     return null;
   }
+}
+
+export function readKidsShareToken(): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(SHARE_TOKEN_KEY) ?? "";
+}
+
+export function writeKidsShareToken(token: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(SHARE_TOKEN_KEY, token);
+}
+
+export function clearKidsShareToken() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(SHARE_TOKEN_KEY);
 }

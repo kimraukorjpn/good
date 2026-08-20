@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { KidsReportDownload } from "@/components/kids/kids-report-download";
+import { KidsReportShare } from "@/components/kids/kids-report-share";
 import { KidsResultView } from "@/components/kids/kids-result-view";
 import { readKidsDraft, readKidsResult } from "@/components/kids/kids-session";
 import { KidsDraft, KidsExperienceResult } from "@/components/kids/types";
@@ -35,6 +36,7 @@ export default function KidsResultPage() {
         </div>
         <div className="kids-result-actions">
           <KidsReportDownload draft={draft} result={result} captureTargetId="kids-report-capture" />
+          <KidsReportShare draft={draft} result={result} />
           <Link className="kids-secondary-button" href="/kids">다시 체험하기</Link>
         </div>
       </section>
